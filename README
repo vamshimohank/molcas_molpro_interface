@@ -1,4 +1,4 @@
-This set of scripts are created to seemlessly go from MOLCAS environment to MOLPRO environment. 
+This set of scripts are created to seemlessly go from OpenMolcas environment to MOLPRO environment. 
 
 Current capabilites are 
 1) Read the hdf5 file written by molcas, e.g. *.rasscf.h5, and create a molpro input file 'molpro.inp'

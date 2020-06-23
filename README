@@ -1,0 +1,8 @@
+This set of scripts are created to seemlessly go from MOLCAS environment to MOLPRO environment. 
+
+Current capabilites are 
+1) Read the hdf5 file written by molcas, e.g. *.rasscf.h5, and create a molpro input file 'molpro.inp'
+	a) Reads the coordinated and basis functions and puts them in the molpro input file
+	b) If ECP's are present in the calculation, unfortunately one needs to provide a file containing them, this is because MOLCAS does not save the ECP information to read from!
+
+2) TODO: Compute the Eigenvalues of AO overlap matrix.

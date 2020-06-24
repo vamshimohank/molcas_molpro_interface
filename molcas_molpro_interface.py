@@ -97,7 +97,7 @@ def create_data_old(basis):
     return data
 
 
-def create_molpro_input(coo, names, basis, molpro_inp_file, hasecp= False, pc_file=''):
+def create_molpro_input(coo, names, basis, molpro_inp_file, hasecp=False, pc_file=''):
     from read_molcas_h5 import write_molpro
     out_file = open(molpro_inp_file, 'w')
 
@@ -140,12 +140,46 @@ def create_molpro_input(coo, names, basis, molpro_inp_file, hasecp= False, pc_fi
     out_file.close()
 
 
-unique_atoms = [1, 2, 6, 14, 20]
-point_charges_file = 'cacuo2.evjen.lat'
-file = '/home/katukuri/work/Molcas/CaCuO2/1site/ANO-R-Zn-sp/B1g/MCPDFT/mcpdft.rasscf.h5'
-molpro_inp_file = 'molpro.inp'
+def ao_ovlp_evals(file):
+    import h5py
+    import numpy as np
 
-coo, names, q, z, basis= read_basis_data_from_h5(file=file)
-hasecp, ecp = check_for_ecps(basis,q)
-# print(hasecp, ecp)
-create_molpro_input(coo, names, basis, molpro_inp_file, hasecp=hasecp, pc_file=point_charges_file)
+    hf = h5py.File(file, 'r')
+    ao_ovlp = np.array(hf.get('AO_OVERLAP_MATRIX'))
+    nsym = hf.attrs['NSYM']
+    nbas = hf.attrs['NBAS']
+
+    ao_ovlp_dim = np.asarray([np.square(i) for i in nbas])
+    print(ao_ovlp_dim)
+
+    ovlp_mats = []
+    for i in range(nsym):
+        temp = ao_ovlp[np.sum(ao_ovlp_dim[:i]): np.sum(ao_ovlp_dim[:i + 1])]
+        ovlp_mats.append(np.reshape(temp, (-1, nbas[i])))
+        print(ovlp_mats[i].shape)
+
+    evals = []
+    evecs = []
+    for i in range(nsym):
+        e, ev = np.linalg.eig(ovlp_mats[i])
+        idx = e.argsort()
+        e = e[idx]
+        ev = ev[:, idx]
+        evals.append(e)
+        evecs.append(ev)
+    return evals, evecs
+
+
+if __name__ == '__main__':
+    unique_atoms = [1, 2, 6, 14, 20]
+    point_charges_file = 'cacuo2.evjen.lat'
+    file = '/home/katukuri/work/Molcas/CaCuO2/1site/ANO-R-Zn-sp/B1g/MCPDFT/mcpdft.rasscf.h5'
+
+    eval, evecs = ao_ovlp_evals(file)
+    print(eval)
+    # molpro_inp_file = 'molpro.inp'
+    #
+    # coo, names, q, z, basis = read_basis_data_from_h5(file=file)
+    # hasecp, ecp = check_for_ecps(basis, q)
+    # # print(hasecp, ecp)
+    # create_molpro_input(coo, names, basis, molpro_inp_file, hasecp=hasecp, pc_file=point_charges_file)

@@ -141,6 +141,12 @@ def create_molpro_input(coo, names, basis, molpro_inp_file, hasecp=False, pc_fil
 
 
 def ao_ovlp_evals(file):
+    '''
+    Given a hdf5 file of molcas calculation, this module computes the eigenvalues of the overlap matrix symmetry irrep. wise
+    :param file: *.h5 file from molcas run
+    :return: evals: a list of dimension #irreps. each element contains eigenvalues of that particular irrep.
+     evecs: a list of of dimension #irreps., each containing eigenvectors of that particular irrep.
+    '''
     import h5py
     import numpy as np
 

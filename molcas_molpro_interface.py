@@ -1,4 +1,6 @@
 toang = 0.529177
+import sys
+#sys.path.append('
 
 
 def read_basis_data_from_h5(file=''):
@@ -97,11 +99,12 @@ def create_data_old(basis):
     return data
 
 
-def create_molpro_input(coo, names, basis, molpro_inp_file, hasecp=False, pc_file=''):
+def create_molpro_input(coo, names, basis, molpro_inp_file, unique_atoms =
+        None, hasecp=False,
+        pc_file='', ovlp_inp = False,ecp_file = 'ecp.dat'):
     from read_molcas_h5 import write_molpro
     out_file = open(molpro_inp_file, 'w')
 
-    ecp_file = 'ecp.dat'
     prefix = '''***, Title\n MEMORY, 1000,M; \n \nGPRINT, BASIS \nGDIRECT\n!Symmetry, NOSYM \nANGSTROM \nGEOMETRY={
     '''
 
@@ -137,7 +140,29 @@ def create_molpro_input(coo, names, basis, molpro_inp_file, hasecp=False, pc_fil
         s += ecp_dat
     s += '}\n'
     print(s, file=out_file)
+
+    if ovlp_inp:
+        ovlp_inp = '''{matrop \n load,S,S \n write,S,molpro.ovlp,new,float \n}
+        '''
+        print(ovlp_inp, file=out_file)
+
     out_file.close()
+    return None
+
+def molpro_calculation(file):
+    import h5py
+    import numpy as np
+
+    hf = h5py.File(file,'r')
+    mos = np.asarray(hf.get('MO_VECTORS'))
+    nsym = hf.attrs['NSYM']
+    nbas = hf.attrs['NBAS']
+    calc_type = hf.attrf['MOLCAS_MODULE']
+    if calc_type == 'RASSCF':
+        nactel = hf.attrf['NACTEL']
+        nactel = hf.attrf['NACTEL']
+
+    return mos
 
 
 def ao_ovlp_evals(file):
@@ -177,15 +202,20 @@ def ao_ovlp_evals(file):
 
 
 if __name__ == '__main__':
-    unique_atoms = [1, 2, 6, 14, 20]
+    import sys
     point_charges_file = 'cacuo2.evjen.lat'
-    file = '/home/katukuri/work/Molcas/CaCuO2/1site/ANO-R-Zn-sp/B1g/MCPDFT/mcpdft.rasscf.h5'
+#    file = '/home/katukuri/work/Molcas/CaCuO2/1site/ANO-R-Zn-sp/B1g/MCPDFT/mcpdft.rasscf.h5'
+    file = sys.argv[1]
+    #unique_atoms = sys.argv[2]
+    unique_atoms = [1, 2, 6, 18, 26, 32]
+    print(unique_atoms)
 
     eval, evecs = ao_ovlp_evals(file)
     print(eval)
-    # molpro_inp_file = 'molpro.inp'
+    molpro_inp_file = 'molpro.inp'
     #
-    # coo, names, q, z, basis = read_basis_data_from_h5(file=file)
-    # hasecp, ecp = check_for_ecps(basis, q)
-    # # print(hasecp, ecp)
-    # create_molpro_input(coo, names, basis, molpro_inp_file, hasecp=hasecp, pc_file=point_charges_file)
+    coo, names, q, z, basis = read_basis_data_from_h5(file=file)
+    hasecp, ecp = check_for_ecps(basis, q)
+    # print(hasecp, ecp)
+    create_molpro_input(coo, names, basis, molpro_inp_file, unique_atoms=unique_atoms, hasecp=hasecp,
+            pc_file=point_charges_file, ovlp_inp = False, ecp_file='ecp.dat')
